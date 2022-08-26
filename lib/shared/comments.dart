@@ -203,3 +203,15 @@
 //     Future.error('error');
 //   }
 // }
+
+///////////////////////////////////////////////
+
+// final response = await http.get(Uri.parse(
+//     'https://xtracker.me/${CacheHelper.getData(key: 'user_image')}'));
+// final imageName = path.basename(
+//     'https://xtracker.me/${CacheHelper.getData(key: 'user_image')}');
+// final appDir = await pathProvider.getApplicationDocumentsDirectory();
+// final localPath = path.join(appDir.path, imageName);
+// final imageFile = File(localPath);
+// await imageFile.writeAsBytes(response.bodyBytes);
+// return imageFile;

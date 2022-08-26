@@ -10,7 +10,6 @@ import 'network/remote/dio_helper.dart';
 
 main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   DioHelper.init();
   await Firebase.initializeApp();
   await CacheHelper.init();
@@ -35,9 +34,10 @@ class MyApp extends StatelessWidget {
         BlocProvider(
           create: (context) => HomeCubit()
             ..getInitialCameraPosition()
-            ..checkIfUserHasOfflineData()
             ..initializedNotification()
-            ..enableBackGroundTrack(),
+            ..saveUserImageOffline()
+            // ..enableBackGroundTrack()
+          // ..checkIfUserHasOfflineData(),
         ),
       ],
       child: MaterialApp(

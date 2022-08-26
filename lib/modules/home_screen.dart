@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,18 +7,32 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:x_tracker_map/cubit/home_cubit/home_cubit.dart';
 import 'package:x_tracker_map/cubit/home_cubit/home_states.dart';
 import 'package:x_tracker_map/modules/login_screen.dart';
-import 'package:x_tracker_map/shared/constants.dart';
 import 'package:x_tracker_map/shared/methods.dart';
 import 'package:x_tracker_map/shared/widgets/reusable_toast.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../network/local/cache_helper.dart';
+import '../shared/constants.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    HomeCubit.get(context).checkIfUserHasOfflineData();
+    HomeCubit.get(context).saveUserImageOffline();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<HomeCubit, HomeStates>(
-      listener: (context, state) async{
-        if (state is UserLogOutSuccessState){
+      listener: (context, state) async {
+        if (state is UserLogOutSuccessState) {
           navigateToAndFinish(
             widget: LoginScreen(),
             context: context,
@@ -68,7 +84,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: (cubit.cameraPosition == null)
+          body: (cubit.cameraPosition == null || cubit.userImageOffline == null)
               ? const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 7,
@@ -76,7 +92,6 @@ class HomeScreen extends StatelessWidget {
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
@@ -88,14 +103,18 @@ class HomeScreen extends StatelessWidget {
                             height: 100,
                             width: 100,
                             decoration: BoxDecoration(
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                  'assets/images/person.png',
-                                ),
+                              image: DecorationImage(
+                                image: cubit.hasInternet == true
+                                    ? NetworkImage(
+                                        'https://xtracker.me/${CacheHelper.getData(key: 'user_image')}',
+                                      )
+                                    : FileImage(
+                                        cubit.userImageOffline ?? File(''),
+                                      ) as ImageProvider,
                                 fit: BoxFit.cover,
                               ),
                               shape: BoxShape.circle,
-                              color: defaultColor,
+                              color: Colors.grey[200],
                             ),
                           ),
                           const SizedBox(
@@ -103,6 +122,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               RichText(
                                 text: TextSpan(
@@ -114,7 +134,9 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                   children: <TextSpan>[
                                     TextSpan(
-                                      text: userName,
+                                      text: CacheHelper.getData(
+                                              key: 'user_name') ??
+                                          '',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.normal,
@@ -208,9 +230,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(
                       height: 20,
                     ),
-                    Container(
-                      width: double.infinity,
-                      height: 450,
+                    Expanded(
                       child: GoogleMap(
                         mapType: MapType.normal,
                         initialCameraPosition:
@@ -225,7 +245,6 @@ class HomeScreen extends StatelessWidget {
                 ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
-              // cubit.position = await cubit.determinePositionWithLocation();
               cubit.locationData = await cubit.determinePositionWithLocation();
               cubit.updateMapPosition(cubit.locationData!);
               var list = await cubit.readJsonFile();

@@ -4,10 +4,12 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:location/location.dart';
 import 'package:x_tracker_map/cubit/login_cubit/login_states.dart';
 import 'package:x_tracker_map/models/login_model.dart';
 import 'package:x_tracker_map/network/remote/dio_helper.dart';
 import 'package:x_tracker_map/shared/constants.dart';
+
 
 import '../../network/endpoints.dart';
 import '../../network/local/cache_helper.dart';
@@ -41,9 +43,27 @@ class LoginCubit extends Cubit<LoginStates> {
       'deviceid': deviceId,
       'devicetoken': deviceToken,
       'devicetype': 'a',
-    }).then((value) {
+    }).then((value) async {
       loginModel = LoginModel.fromJson(value.data);
       print(loginModel!.message);
+      if (loginModel?.data != null) {
+        await CacheHelper.saveData(
+          key: 'user_id',
+          value: loginModel?.data?.id,
+        );
+        await CacheHelper.saveData(
+          key: 'user_name',
+          value: loginModel?.data?.name,
+        );
+        await CacheHelper.saveData(
+          key: 'user_image',
+          value: loginModel?.data?.image,
+        );
+        await CacheHelper.saveData(
+          key: 'login',
+          value: true,
+        );
+      }
       emit(LoginUserSuccessState(loginModel!));
     }).catchError((error) {
       print(error.toString());
@@ -72,4 +92,15 @@ class LoginCubit extends Cubit<LoginStates> {
     print('device id is $deviceId');
     print('device token is $deviceToken');
   }
+
+  Future<void> enableBackGroundTrack() async {
+    try {
+      await Location().enableBackgroundMode(
+        enable: true,
+      );
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
 }

@@ -51,3 +51,7 @@ class GetUserOfflineDataSuccessState extends HomeStates {}
 class GetUserOfflineDataErrorState extends HomeStates {}
 
 class ClearUserOfflineDataAfterSendingItToServerState extends HomeStates{}
+
+class ChangeBackgroundStatusState extends HomeStates{}
+
+class SaveFileImageOfflineState extends HomeStates{}

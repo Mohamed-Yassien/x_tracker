@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:x_tracker_map/shared/constants.dart';
 
 ThemeData darkTheme = ThemeData(
   // fontFamily: 'Lemonada',

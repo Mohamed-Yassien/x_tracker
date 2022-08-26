@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:x_tracker_map/cubit/login_cubit/login_cubit.dart';
 import 'package:x_tracker_map/cubit/login_cubit/login_states.dart';
 import 'package:x_tracker_map/modules/home_screen.dart';
-import 'package:x_tracker_map/network/local/cache_helper.dart';
 import 'package:x_tracker_map/shared/constants.dart';
 import 'package:x_tracker_map/shared/methods.dart';
 import 'package:x_tracker_map/shared/widgets/reusable_text_field.dart';
@@ -18,7 +17,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginCubit(),
+      create: (context) => LoginCubit()..enableBackGroundTrack(),
       child: BlocConsumer<LoginCubit, LoginStates>(
         listener: (context, state) async {
           if (state is LoginUserSuccessState) {
@@ -28,21 +27,6 @@ class LoginScreen extends StatelessWidget {
                 toastStates: ToastStates.ERROR,
               );
             } else {
-              await CacheHelper.saveData(
-                key: 'user_id',
-                value: state.loginModel.data!.id,
-              );
-              await CacheHelper.saveData(
-                key: 'user_name',
-                value: state.loginModel.data?.name,
-              );
-              await CacheHelper.saveData(
-                key: 'login',
-                value: true,
-              );
-              print(loginBefore);
-              print(userId);
-              print(userName);
               navigateToAndFinish(
                 widget: HomeScreen(),
                 context: context,

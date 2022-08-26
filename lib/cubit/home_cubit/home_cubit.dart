@@ -10,13 +10,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:x_tracker_map/cubit/home_cubit/home_states.dart';
 import 'package:x_tracker_map/models/send_location_model.dart';
 import 'package:x_tracker_map/network/local/cache_helper.dart';
+import 'package:x_tracker_map/services/file_srevice.dart';
 import 'package:x_tracker_map/services/local_notification_service.dart';
 import 'package:x_tracker_map/shared/widgets/reusable_toast.dart';
+import 'package:http/http.dart' as http;
 
 import '../../models/logout_model.dart';
 import '../../network/endpoints.dart';
 import '../../network/remote/dio_helper.dart';
-import '../../shared/constants.dart';
 
 class HomeCubit extends Cubit<HomeStates> {
   HomeCubit() : super(HomeInitialState());
@@ -28,13 +29,15 @@ class HomeCubit extends Cubit<HomeStates> {
   void userLogOut() {
     emit(UserLogOutLoadingState());
     DioHelper.postData(url: LOGOUT, data: {
-      'id': userId,
+      'id': CacheHelper.getData(key: 'user_id') ?? '',
     }).then((value) async {
       logOutModel = LogOutModel.fromJson(value.data);
       print(logOutModel!.message);
       await CacheHelper.remove(key: 'login');
       await CacheHelper.remove(key: 'user_name');
       await CacheHelper.remove(key: 'user_id');
+      markers.clear();
+      mController = Completer();
       emit(UserLogOutSuccessState(logOutModel!));
     }).catchError((error) {
       print(error.toString());
@@ -78,6 +81,7 @@ class HomeCubit extends Cubit<HomeStates> {
     emit(ChangeUserStatusState());
     if (!isOffline) {
       showNotification();
+      // await enableBackGroundTrack();
       Timer.periodic(
         const Duration(seconds: 10),
         (timer) async {
@@ -88,11 +92,11 @@ class HomeCubit extends Cubit<HomeStates> {
                   (value2) {
                     if (hasInternet == true) {
                       sendUserLocationToServer(
-                        latitude: value.latitude,
-                        longitude: value.longitude,
-                        dateTime: DateTime.now().toString(),
-                        stopPoint: 1,
-                      );
+                          latitude: value.latitude,
+                          longitude: value.longitude,
+                          dateTime: DateTime.now().toString(),
+                          stopPoint: 1,
+                          user_id: CacheHelper.getData(key: 'user_id'));
                       emit(TrueCheckState());
                     } else if (hasInternet == false) {
                       showToast(
@@ -126,11 +130,11 @@ class HomeCubit extends Cubit<HomeStates> {
       if (hasInternet == true) {
         determinePositionWithLocation().then((value) {
           sendUserLocationToServer(
-            latitude: value.latitude,
-            longitude: value.longitude,
-            dateTime: DateTime.now().toString(),
-            stopPoint: 0,
-          );
+              latitude: value.latitude,
+              longitude: value.longitude,
+              dateTime: DateTime.now().toString(),
+              stopPoint: 0,
+              user_id: CacheHelper.getData(key: 'user_id'));
         });
       } else if (hasInternet == false) {
         determinePositionWithLocation().then((value) {
@@ -155,7 +159,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   LocationData? locationData;
 
-  void getInitialCameraPosition() {
+  Future<void> getInitialCameraPosition() async{
     determinePositionWithLocation().then(
       (value) {
         cameraPosition = CameraPosition(
@@ -210,6 +214,8 @@ class HomeCubit extends Cubit<HomeStates> {
     emit(UpdateUserLocationState());
   }
 
+  bool enableBackground = false;
+
   Future<LocationData> determinePositionWithLocation() async {
     Location location = Location();
 
@@ -227,20 +233,15 @@ class HomeCubit extends Cubit<HomeStates> {
     permissionGranted = await location.hasPermission();
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
-      if (permissionGranted == PermissionStatus.deniedForever) {
+      if (permissionGranted != PermissionStatus.granted) {
         Future.error('error');
       }
     }
+
     return await Location().getLocation();
   }
 
-  void enableBackGroundTrack() async {
-    try {
-      await Location.instance.enableBackgroundMode(enable: true);
-    } catch (e) {
-      print(e.toString());
-    }
-  }
+
 
   SendLocationModel? sendLocationModel;
 
@@ -249,12 +250,13 @@ class HomeCubit extends Cubit<HomeStates> {
     required longitude,
     required dateTime,
     required stopPoint,
+    required user_id,
   }) {
     emit(SendUserLocationToServerLoadingState());
     DioHelper.postData(
       url: SEND_LOCATION,
       data: {
-        'empId': userId,
+        'empId': user_id,
         'dateTime': dateTime,
         'latitude': latitude,
         'longitude': longitude,
@@ -307,6 +309,7 @@ class HomeCubit extends Cubit<HomeStates> {
       longKey: longValue,
       'time': time,
       'stop point': stopPoint,
+      'user_id': CacheHelper.getData(key: 'user_id'),
     };
     print('1.(_writeJson) _newJson: $newJson');
     json.add(newJson);
@@ -336,7 +339,6 @@ class HomeCubit extends Cubit<HomeStates> {
 
   Future<void> checkIfUserHasOfflineData() async {
     await internetListener();
-
     if (hasInternet = true) {
       var offline = await readJsonFile();
       if (offline!.isNotEmpty) {
@@ -345,26 +347,32 @@ class HomeCubit extends Cubit<HomeStates> {
             msg: 'you have offline data',
             toastStates: ToastStates.WARNING,
           );
-          offline.forEach(
-            (element) {
-              sendUserLocationToServer(
-                latitude: element['latitude'],
-                longitude: element['longitude'],
-                dateTime: element['time'],
-                stopPoint: 1,
-              );
-            },
-          );
-          localJsonFile.then(
-            (value) {
-              value.delete();
-              emit(ClearUserOfflineDataAfterSendingItToServerState());
-            },
-          );
-          showToast(
-            msg: 'finish sending offline data',
-            toastStates: ToastStates.SUCCESS,
-          );
+          try {
+            offline.forEach(
+              (element) {
+                sendUserLocationToServer(
+                  latitude: element['latitude'],
+                  longitude: element['longitude'],
+                  dateTime: element['time'],
+                  stopPoint: 1,
+                  user_id: element['user_id'],
+                );
+              },
+            );
+            localJsonFile.then(
+              (value) {
+                value.delete();
+                json.clear();
+                emit(ClearUserOfflineDataAfterSendingItToServerState());
+              },
+            );
+            showToast(
+              msg: 'finish sending offline data',
+              toastStates: ToastStates.SUCCESS,
+            );
+          } catch (e) {
+            print(e.toString());
+          }
         }
       }
     }
@@ -372,5 +380,19 @@ class HomeCubit extends Cubit<HomeStates> {
 
   void initializedNotification() async {
     await LocalNotificationService.initialize();
+  }
+
+  File? userImageOffline;
+
+  Future<void> saveUserImageOffline() async {
+    await FileService.localPath();
+    File localFile = await FileService.localFile();
+    userImageOffline = localFile;
+
+    var response = await http.get(Uri.parse(
+        'https://xtracker.me/${CacheHelper.getData(key: 'user_image')}'));
+    await userImageOffline?.writeAsBytes(response.bodyBytes);
+    print('image is $userImageOffline');
+    emit(SaveFileImageOfflineState());
   }
 }

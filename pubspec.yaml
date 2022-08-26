@@ -49,6 +49,8 @@ dependencies:
   device_info_plus:
   flutter_launcher_icons: ^0.10.0
   path_provider:
+  path:
+  http:
 
 #  app_settings:
 #  permission_handler:
