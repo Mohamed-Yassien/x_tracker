@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:x_tracker_map/cubit/home_cubit/home_cubit.dart';
+import 'package:rebirth/rebirth.dart';
 import 'package:x_tracker_map/modules/splash_screen.dart';
 import 'package:x_tracker_map/shared/themes.dart';
 import 'cubit/bloc_observer.dart';
@@ -14,13 +14,11 @@ main() async {
   await Firebase.initializeApp();
   await CacheHelper.init();
 
-  BlocOverrides.runZoned(
-    () {
-      runApp(
-        const MyApp(),
-      );
-    },
-    blocObserver: MyBlocObserver(),
+  Bloc.observer = MyBlocObserver();
+  runApp(
+    WidgetRebirth(
+      materialApp: const MyApp(),
+    ),
   );
 }
 
@@ -29,22 +27,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => HomeCubit()
-            ..getInitialCameraPosition()
-            ..initializedNotification()
-            ..saveUserImageOffline()
-            // ..enableBackGroundTrack()
-          // ..checkIfUserHasOfflineData(),
-        ),
-      ],
-      child: MaterialApp(
-        theme: lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: SplashScreen(),
-      ),
+    return MaterialApp(
+      theme: lightTheme,
+      debugShowCheckedModeBanner: false,
+      home: SplashScreen(),
     );
   }
 }

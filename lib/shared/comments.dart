@@ -215,3 +215,39 @@
 // final imageFile = File(localPath);
 // await imageFile.writeAsBytes(response.bodyBytes);
 // return imageFile;
+
+///////////////////////////
+
+//   await Location().enableBackgroundMode(enable: true).then(
+//     (value) async {
+//     },
+//   ).catchError((e) async {
+//     // await showDialog(
+//     //   context: context,
+//     //   barrierDismissible: false,
+//     //   builder: (context) => AlertDialog(
+//     //     content: Text(
+//     //       'you should allow x-tracker to access your location all time',
+//     //       style: TextStyle(
+//     //         color: defaultColor,
+//     //         fontWeight: FontWeight.bold,
+//     //       ),
+//     //     ),
+//     //     actions: [
+//     //       TextButton(
+//     //         onPressed: () async {
+//     //           await Location()
+//     //               .enableBackgroundMode(enable: true)
+//     //               .then((value) async {
+//     //             Navigator.pop(context);
+//     //           }).catchError((e) {
+//     //             Location().isBackgroundModeEnabled() == false;
+//     //           });
+//     //         },
+//     //         child: const Text('confirm'),
+//     //       ),
+//     //     ],
+//     //   ),
+//     // );
+//   });
+// }

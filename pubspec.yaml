@@ -43,7 +43,7 @@ dependencies:
   firebase_messaging:
   firebase_core:
   google_maps_flutter:
-  flutter_local_notifications:
+  flutter_local_notifications: ^9.8.0
   location:
   internet_connection_checker:
   device_info_plus:
@@ -51,6 +51,8 @@ dependencies:
   path_provider:
   path:
   http:
+  rebirth: ^1.0.2
+  permission_handler:
 
 #  app_settings:
 #  permission_handler:

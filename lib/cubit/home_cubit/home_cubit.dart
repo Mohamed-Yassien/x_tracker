@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:location/location.dart' as loc;
 import 'package:location/location.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:x_tracker_map/cubit/home_cubit/home_states.dart';
@@ -79,6 +80,7 @@ class HomeCubit extends Cubit<HomeStates> {
     statusTextColor = isOffline ? Colors.red : Colors.green;
     statusText = isOffline ? 'offline' : 'online';
     emit(ChangeUserStatusState());
+
     if (!isOffline) {
       showNotification();
       // await enableBackGroundTrack();
@@ -137,16 +139,18 @@ class HomeCubit extends Cubit<HomeStates> {
               user_id: CacheHelper.getData(key: 'user_id'));
         });
       } else if (hasInternet == false) {
-        determinePositionWithLocation().then((value) {
-          writeJsonData(
-            latKey: 'latitude',
-            latValue: value.latitude.toString(),
-            longKey: 'longitude',
-            longValue: value.longitude.toString(),
-            time: DateTime.now().toString(),
-            stopPoint: 0,
-          );
-        });
+        determinePositionWithLocation().then(
+          (value) {
+            writeJsonData(
+              latKey: 'latitude',
+              latValue: value.latitude.toString(),
+              longKey: 'longitude',
+              longValue: value.longitude.toString(),
+              time: DateTime.now().toString(),
+              stopPoint: 0,
+            );
+          },
+        );
       }
     }
   }
@@ -157,9 +161,9 @@ class HomeCubit extends Cubit<HomeStates> {
 
   CameraPosition? cameraPosition;
 
-  LocationData? locationData;
+  loc.LocationData? locationData;
 
-  Future<void> getInitialCameraPosition() async{
+  void getInitialCameraPosition() {
     determinePositionWithLocation().then(
       (value) {
         cameraPosition = CameraPosition(
@@ -182,7 +186,7 @@ class HomeCubit extends Cubit<HomeStates> {
     zoom: 14.4746,
   );
 
-  Future<void> updateMapPosition(LocationData position) async {
+  Future<void> updateMapPosition(loc.LocationData position) async {
     final GoogleMapController controller = await mController.future;
     controller.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -216,11 +220,14 @@ class HomeCubit extends Cubit<HomeStates> {
 
   bool enableBackground = false;
 
-  Future<LocationData> determinePositionWithLocation() async {
-    Location location = Location();
+  Future<loc.LocationData> determinePositionWithLocation() async {
+    loc.Location location = loc.Location();
 
+    location.enableBackgroundMode(
+      enable: true,
+    );
     bool serviceEnabled;
-    PermissionStatus permissionGranted;
+    loc.PermissionStatus permissionGranted;
 
     serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
@@ -231,17 +238,14 @@ class HomeCubit extends Cubit<HomeStates> {
     }
 
     permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
+    if (permissionGranted == loc.PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
+      if (permissionGranted != loc.PermissionStatus.granted) {
         Future.error('error');
       }
     }
-
-    return await Location().getLocation();
+    return await loc.Location().getLocation();
   }
-
-
 
   SendLocationModel? sendLocationModel;
 
@@ -395,4 +399,96 @@ class HomeCubit extends Cubit<HomeStates> {
     print('image is $userImageOffline');
     emit(SaveFileImageOfflineState());
   }
+
+  enableTrack(context) async {
+    Location()
+        .enableBackgroundMode(
+      enable: true,
+    )
+        .catchError((e) {
+      print(e);
+    });
+  }
+
+//
+// Future<void> enableBackGroundTrack(context) async
+//   //   await Location()
+//   //       .enableBackgroundMode(
+//   //     enable: true,
+//   //   )
+//   //       .catchError((e) async {
+//   //     while (await Location().isBackgroundModeEnabled() != await Location()
+//   //         .enableBackgroundMode(
+//   //       enable: true,
+//   //     )) {
+//   //       await Location()
+//   //           .enableBackgroundMode(
+//   //         enable: true,
+//   //       );
+//   //     }
+//   //   });
+//   // }
+//   try {
+//     await Location().enableBackgroundMode(
+//       enable: true,
+//     );
+//   } on Exception {
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => AlertDialog(
+//         content: Text(
+//           'you should allow x-tracker to access your location all time',
+//           style: TextStyle(
+//             color: defaultColor,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () async {
+//               await Location()
+//                   .enableBackgroundMode(
+//                 enable: true,
+//               )
+//                   .catchError((e) {
+//                 Navigator.pop(context);
+//                 SystemNavigator.pop(animated: true);
+//               });
+//             },
+//             child: const Text('confirm'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 }
+
+// showDialog(
+//   context: context,
+//   barrierDismissible: false,
+//   builder: (context) => AlertDialog(
+//     content: Text(
+//       'you should allow x-tracker to access your location all time',
+//       style: TextStyle(
+//         color: defaultColor,
+//         fontWeight: FontWeight.bold,
+//       ),
+//     ),
+//     actions: [
+//       TextButton(
+//         onPressed: () async {
+//           await Location()
+//               .enableBackgroundMode(
+//             enable: true,
+//           )
+//               .catchError((e) {
+//             SystemNavigator.pop(animated: true);
+//           });
+//         },
+//         child: const Text('confirm'),
+//       ),
+//     ],
+//   ),
+// );

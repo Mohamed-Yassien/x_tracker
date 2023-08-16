@@ -17,9 +17,10 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginCubit()..enableBackGroundTrack(),
+      create: (context) => LoginCubit(),
       child: BlocConsumer<LoginCubit, LoginStates>(
         listener: (context, state) async {
+          if (state is ChangeUserEnableSuccessState) {}
           if (state is LoginUserSuccessState) {
             if (state.loginModel.data == null) {
               showToast(

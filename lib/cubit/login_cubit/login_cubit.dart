@@ -4,13 +4,10 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:location/location.dart';
 import 'package:x_tracker_map/cubit/login_cubit/login_states.dart';
 import 'package:x_tracker_map/models/login_model.dart';
 import 'package:x_tracker_map/network/remote/dio_helper.dart';
 import 'package:x_tracker_map/shared/constants.dart';
-
-
 import '../../network/endpoints.dart';
 import '../../network/local/cache_helper.dart';
 
@@ -93,14 +90,134 @@ class LoginCubit extends Cubit<LoginStates> {
     print('device token is $deviceToken');
   }
 
-  Future<void> enableBackGroundTrack() async {
-    try {
-      await Location().enableBackgroundMode(
-        enable: true,
-      );
-    } catch (e) {
-      print(e.toString());
-    }
-  }
+// PermissionStatus permissionStatus = PermissionStatus.denied;
+//
+// Future<void> enableBackGroundTrack(context) async {
+//   if (permissionStatus != PermissionStatus.granted) {
+//     Location()
+//         .enableBackgroundMode(
+//       enable: true,
+//     )
+//         .then((value) {
+//       permissionStatus = PermissionStatus.granted;
+//       emit(ChangeUserEnableSuccessState());
+//     }).catchError(
+//       (e) {
+//         permissionStatus = PermissionStatus.denied;
+//         emit(ChangeUserEnableErrorState());
+//         showDialog(
+//           context: context,
+//           barrierDismissible: false,
+//           builder: (context) => AlertDialog(
+//             content: Text(
+//               'you should allow x-tracker to access your location all time',
+//               style: TextStyle(
+//                 color: defaultColor,
+//                 fontWeight: FontWeight.bold,
+//               ),
+//             ),
+//             actions: [
+//               TextButton(
+//                 onPressed: () async {
+//                   await Location()
+//                       .enableBackgroundMode(
+//                     enable: true,
+//                   )
+//                       .then(
+//                     (val) {
+//                       permissionStatus = PermissionStatus.granted;
+//                       Navigator.pop(context);
+//                       emit(ChangeUserEnableSuccessState());
+//                     },
+//                   ).catchError(
+//                     (e) async {
+//                       permissionStatus = PermissionStatus.denied;
+//                       Navigator.pop(context);
+//                       emit(ChangeUserEnableErrorState());
+//                       print('permission is $permissionStatus');
+//                       exit(0);
+//                     },
+//                   );
+//                 },
+//                 child: const Text('confirm'),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }
 
+// Future<bool> permissionFromUser() async{
+//   return await Location().enableBackgroundMode();
+// }
+//
+// Future<void> enableBackGroundTrack(context) async {
+//   bool hasPermission = await permissionFromUser();
+//   while (!hasPermission) {
+//     await permissionFromUser();
+//     hasPermission = await permissionFromUser();
+//     print('has = $hasPermission');
+//   }
+// }
+//
+// Future<void> enableBackground() async {
+//   await Permission.locationAlways.request();
+//   var permission = await Permission.locationAlways.isGranted;
+//   if (!permission) {
+//     var t = await Permission.locationAlways.request();
+//   }
+// }
+
+// Future<void> enableBackGroundTrack(context) async {
+//
+//   final mode = await Location().enableBackgroundMode();
+//
+//   if(mode == false){
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => AlertDialog(
+//         content: Text(
+//           'you should allow x-tracker to access your location all time',
+//           style: TextStyle(
+//             color: defaultColor,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
+//         actions: [
+//           TextButton(
+//             onPressed: () async {
+//               await Location()
+//                   .enableBackgroundMode(
+//                 enable: true,
+//               ).catchError((e) {
+//                 SystemNavigator.pop(animated: true);
+//               }).catchError((e) {
+//                 print(e.toString());
+//               });
+//             },
+//             child: const Text('confirm'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   try {
+//     await Location().enableBackgroundMode(
+//       enable: true,
+//     );
+//   } catch (e) {
+//
+//     // await Location()
+//     //     .enableBackgroundMode(
+//     //   enable: true,
+//     // )
+//     //     .catchError((error) {
+//     //   SystemNavigator.pop(animated: true);
+//     // });
+//   }
+// }
 }
